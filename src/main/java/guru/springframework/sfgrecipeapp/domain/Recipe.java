@@ -19,16 +19,23 @@ public class Recipe {
     private String url;
     private String directions;
 
-    //TODO ADD Private Difficulty difficulty
+    @Enumerated(value = EnumType.STRING)
+    private Difficulty difficulty;
 
     @Lob
     private Byte[] image;
 
-    @OneToOne(fetch = FetchType.EAGER ,cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Note notes;
 
-    @OneToMany(cascade = CascadeType.ALL , mappedBy = "recipe")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "recipe")
     private Set<Ingredient> ingredients = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "Recipe_Category",
+            joinColumns = @JoinColumn(name = "Recipe_Id"),
+            inverseJoinColumns = @JoinColumn(name = "Category_Id"))
+    private Set<Category> categories = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -94,6 +101,14 @@ public class Recipe {
         this.directions = directions;
     }
 
+    public Difficulty getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
+    }
+
     public Byte[] getImage() {
         return image;
     }
@@ -116,5 +131,13 @@ public class Recipe {
 
     public void setIngredients(Set<Ingredient> ingredients) {
         this.ingredients = ingredients;
+    }
+
+    public Set<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(Set<Category> categories) {
+        this.categories = categories;
     }
 }
