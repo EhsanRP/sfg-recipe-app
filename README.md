@@ -1,1 +1,1 @@
-# sfg-recipe-app
+# Spring Boot Recipe Application
