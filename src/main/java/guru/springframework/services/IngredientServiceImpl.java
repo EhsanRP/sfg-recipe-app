@@ -8,10 +8,8 @@ import guru.springframework.domain.Recipe;
 import guru.springframework.repositories.RecipeRepository;
 import guru.springframework.repositories.UnitOfMeasureRepository;
 import lombok.extern.slf4j.Slf4j;
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -78,18 +76,28 @@ public class IngredientServiceImpl implements IngredientService {
                         findById(command.getUom().getId())
                         //TODO ADDRESS THIS
                         .orElseThrow(() -> new RuntimeException("Not Found")));
-            } else
-                recipe.addIngredient(Objects.requireNonNull(ingredientCommandToIngredient.convert(command)));
+            } else {
+                Ingredient ingredient = ingredientCommandToIngredient.convert(command);
+                ingredient.setRecipe(recipe);
+                recipe.addIngredient(ingredient);
+            }
 
             Recipe savedRecipe = recipeRepository.save(recipe);
 
+            Optional<Ingredient> savedIngredientOptional = savedRecipe.getIngredients().stream()
+                    .filter(ingredient -> ingredient.getId().equals(command.getId()))
+                    .findFirst();
+
+            if (!savedIngredientOptional.isPresent()){
+                savedIngredientOptional = savedRecipe.getIngredients().stream()
+                        .filter(ingredient -> ingredient.getDescription().equals(command.getDescription()))
+                        .filter(ingredient -> ingredient.getAmount().equals(command.getAmount()))
+                        .filter(ingredient -> ingredient.getUom().getId().equals(command.getUom().getId()))
+                        .findFirst();
+            }
+
             //TODO CHECK FOR FAIL
-            return ingredientToIngredientCommand.convert(
-                    savedRecipe.getIngredients().stream()
-                            .filter(ingredient -> ingredient.getId().equals(command.getId()))
-                            .findFirst()
-                            .get()
-            );
+            return ingredientToIngredientCommand.convert(savedIngredientOptional.get());
         }
 
 
