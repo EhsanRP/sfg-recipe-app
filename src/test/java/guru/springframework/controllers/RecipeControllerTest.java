@@ -36,11 +36,14 @@ public class RecipeControllerTest {
         MockitoAnnotations.initMocks(this);
 
         controller = new RecipeController(recipeService);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(controller)
+                .setControllerAdvice(new ControllerExceptionHandler())
+                .build();
     }
 
     @Test
-    public void testGetRecipe() throws Exception {
+    public void getRecipe() throws Exception {
 
         Recipe recipe = new Recipe();
         recipe.setId(1L);
@@ -54,7 +57,7 @@ public class RecipeControllerTest {
     }
 
     @Test
-    public void testGetNewRecipeForm() throws Exception {
+    public void getNewRecipeForm() throws Exception {
         RecipeCommand command = new RecipeCommand();
 
         mockMvc.perform(get("/recipe/new"))
@@ -64,7 +67,7 @@ public class RecipeControllerTest {
     }
 
     @Test
-    public void testPostNewRecipeForm() throws Exception {
+    public void postNewRecipeForm() throws Exception {
         RecipeCommand command = new RecipeCommand();
         command.setId(2L);
 
@@ -74,13 +77,33 @@ public class RecipeControllerTest {
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .param("id", "")
                 .param("description", "some string")
+                .param("directions" , "some directions")
         )
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name("redirect:/recipe/2/show"));
     }
 
+    // IT SHOULD FAIL THE VALIDATION DUE TO EMPTY REQUIRED FIELDS
     @Test
-    public void testGetUpdateView() throws Exception {
+    public void postNewRecipeFromValidation() throws Exception{
+
+        //GIVEN
+        RecipeCommand recipeCommand = new RecipeCommand();
+        recipeCommand.setId(2L);
+
+        //WHEN
+        when(recipeService.saveRecipeCommand(any())).thenReturn(recipeCommand);
+
+        //THEN
+        mockMvc.perform(post("/recipe")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeExists("recipe"))
+                .andExpect(view().name("recipe/recipeform"));
+    }
+
+    @Test
+    public void getUpdateView() throws Exception {
         RecipeCommand command = new RecipeCommand();
         command.setId(2L);
 
@@ -93,7 +116,7 @@ public class RecipeControllerTest {
     }
 
     @Test
-    public void testDeleteAction() throws Exception {
+    public void deleteAction() throws Exception {
         mockMvc.perform(get("/recipe/1/delete"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name("redirect:/"));
@@ -101,9 +124,8 @@ public class RecipeControllerTest {
         verify(recipeService, times(1)).deleteById(anyLong());
     }
 
-
     @Test
-    public void gerRecipeNotFound() throws Exception {
+    public void getRecipeNotFound() throws Exception {
 
         //GIVEN
         Recipe recipe = new Recipe();
@@ -114,7 +136,16 @@ public class RecipeControllerTest {
 
         //Then
         mockMvc.perform(get("/recipe/1/show"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(view().name("404error"));
+
+    }
+
+    @Test
+    public void getRecipeNumberFormat() throws Exception {
+        mockMvc.perform(get("/recipe/asd/show"))
+                .andExpect(status().isBadRequest())
+                .andExpect(view().name("400error"));
 
     }
 }
