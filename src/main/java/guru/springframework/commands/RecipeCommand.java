@@ -44,7 +44,9 @@ public class RecipeCommand {
     @NotBlank
     private String directions;
 
+    @Max(255)
     private String source;
+
     private Set<IngredientCommand> ingredients = new HashSet<>();
     private Difficulty difficulty;
     private NotesCommand notes;

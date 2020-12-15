@@ -4,13 +4,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * Created by jt on 6/21/17.
- */
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
 @Getter
 @Setter
 @NoArgsConstructor
 public class UnitOfMeasureCommand {
     private Long id;
+
+    @NotBlank
+    @Size(min = 0,max = 255)
     private String description;
 }
